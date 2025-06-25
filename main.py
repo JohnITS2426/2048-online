@@ -18,7 +18,7 @@ state = {
 app.mount("/static", StaticFiles(directory="FrontEnd-2048"), name="static")
 
 @app.get("/")
-def serve_index():
+def root():
     return FileResponse("FrontEnd-2048/index.html")
 
 @app.post("/game/start")
