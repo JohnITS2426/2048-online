@@ -1,13 +1,20 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app import game
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import game
 import copy
+
+# Importa il modulo game (assicurati che esista)
 
 app = FastAPI()
 
-# Stato del gioco
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = (BASE_DIR / ".." / "FrontEnd-2048").resolve()
+
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+# Stato globale del gioco
 state = {
     "board": game.new_board(),
     "score": 0,
@@ -15,20 +22,9 @@ state = {
     "won": False
 }
 
-frontend_dir = Path(__file__).parent.parent / "FrontEnd-2048"
-if not frontend_dir.exists():
-    raise RuntimeError(f"Directory {frontend_dir} non trovata")
-
-# Mount frontend
-app.mount("/static", StaticFiles(directory="FrontEnd-2048"), name="static")
-
-
 @app.get("/")
 def serve_index():
-    index_file = frontend_dir / "/static/index.html"
-    if not index_file.exists():
-        raise HTTPException(status_code=404, detail="index.html non trovato")
-    return FileResponse(str(index_file))
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 @app.post("/game/start")
 def start_game():
@@ -43,9 +39,10 @@ def make_move(direction: int):
     if direction < 0 or direction > 3:
         raise HTTPException(status_code=400, detail="Direzione non valida")
     prev_board = copy.deepcopy(state["board"])
-    new_board = game.move(state["board"], direction)
+    new_board, score_delta = game.move(state["board"], direction)
     if new_board != prev_board:
         state["board"] = new_board
+        state["score"] += score_delta
         state["won"] = game.check_won(state["board"])
         state["game_over"] = game.check_game_over(state["board"])
     return state
