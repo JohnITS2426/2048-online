@@ -25,7 +25,7 @@ app.mount("/static", StaticFiles(directory="FrontEnd-2048"), name="static")
 
 @app.get("/")
 def serve_index():
-    index_file = frontend_dir / "index.html"
+    index_file = frontend_dir / "/static/index.html"
     if not index_file.exists():
         raise HTTPException(status_code=404, detail="index.html non trovato")
     return FileResponse(str(index_file))
